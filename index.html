@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Download ZIP</title>
+  <title>Download & Copy URL</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,9 +11,10 @@
       padding-top: 100px;
       background: #f5f5f5;
     }
-    .btn-download {
+    .btn {
       display: inline-block;
       padding: 12px 24px;
+      margin: 10px;
       background-color: #007bff;
       color: white;
       text-decoration: none;
@@ -22,30 +23,41 @@
       cursor: pointer;
       transition: background-color 0.2s;
     }
-    .btn-download:hover {
+    .btn:hover {
       background-color: #0056b3;
     }
   </style>
 </head>
 <body>
-  <h1>Download ZIP File</h1>
-  <button class="btn-download" id="downloadBtn">Download ZIP</button>
+  <h1>Download ZIP & Copy URL</h1>
+  
+  <!-- Download ZIP Button -->
+  <button class="btn" id="downloadBtn">Download ZIP</button>
+
+  <!-- Copy URL Button -->
+  <button class="btn" id="copyBtn">Copy URL</button>
 
   <script>
+    // --- Download ZIP ---
     document.getElementById('downloadBtn').addEventListener('click', function() {
-      // file ID from your Google Drive share link
       const fileId = '1JfWDJW97zxX96_Iu7uGls45S3jKgx892';
-
-      // Construct a download URL
       const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-      // Create a hidden <a> and trigger click
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = '';  // the browser may infer name or use default
+      a.download = '';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+    });
+
+    // --- Copy URL ---
+    document.getElementById('copyBtn').addEventListener('click', function() {
+      const urlToCopy =  'https://arranged-baker-winner-logical.trycloudflare.com';
+      navigator.clipboard.writeText(urlToCopy).then(() => {
+        alert('URL copied to clipboard!');
+      }).catch(err => {
+        alert('Failed to copy URL: ' + err);
+      });
     });
   </script>
 </body>
