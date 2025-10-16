@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MP3 Player</title>
+    <style>
+      body {
+        background: #121212;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        padding-top: 30px;
+      }
+      h1 {
+        margin-bottom: 20px;
+      }
+      .inputs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .inputs input,
+      .inputs button {
+        padding: 6px 10px;
+        border-radius: 5px;
+        border: none;
+        font-size: 14px;
+      }
+      .inputs button {
+        background-color: #0078ff;
+        color: white;
+        cursor: pointer;
+      }
+      .inputs button:hover {
+        background-color: #005fd1;
+      }
+      audio {
+        width: 300px;
+        outline: none;
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+        margin-bottom: 10px;
+      }
+      .light {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: green;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+        transition: background-color 0.3s, box-shadow 0.3s;
+        margin-bottom: 20px;
+      }
+      .muted {
+        background-color: red;
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+      }
+      .playlist {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 300px;
+        margin-bottom: 20px;
+      }
+      .track {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1f1f1f;
+        padding: 10px 15px;
+        border-radius: 8px;
+        transition: background 0.3s;
+      }
+      .track:hover {
+        background: #292929;
+      }
+      .track button {
+        background: #0078ff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      .track button:hover {
+        background: #005fd1;
+      }
+      .volume-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+      }
+      .volume-controls button {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        background-color: #0078ff;
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+      }
+      .volume-controls button:hover {
+        background-color: #005fd1;
+      }
+      .volume-label {
+        margin-left: 10px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎵 MP3 Player</h1>
+
+    <div class="inputs">
+      <input type="text" id="username" placeholder=" username" />
+      <input type="text" id="repo" placeholder=" name" />
+      <input
+        type="number"
+        id="file-count"
+        placeholder="Number of files"
+        min="1"
+      />
+      <button id="load">Load Playlist</button>
+    </div>
+
+    <audio id="player" controls></audio>
+    <div id="light" class="light"></div>
+
+    <div class="volume-controls">
+      <button id="vol-down">-</button>
+      <button id="vol-up">+</button>
+      <span class="volume-label" id="vol-label">5%</span>
+    </div>
+
+    <div class="playlist" id="playlist"></div>
+
+    <script>
+      const audio = document.getElementById("player");
+      const light = document.getElementById("light");
+      const playlist = document.getElementById("playlist");
+      const volLabel = document.getElementById("vol-label");
+      const volUp = document.getElementById("vol-up");
+      const volDown = document.getElementById("vol-down");
+      const loadBtn = document.getElementById("load");
+      const usernameInput = document.getElementById("username");
+      const repoInput = document.getElementById("repo");
+      const fileCountInput = document.getElementById("file-count");
+
+      // Default volume 5%
+      audio.volume = 0.05;
+      volLabel.textContent = Math.round(audio.volume * 100) + "%";
+
+      let currentButton = null; // Keep track of current playing button
+
+      // Build playlist function
+      async function buildPlaylist(baseURL, count) {
+        playlist.innerHTML = "";
+        for (let i = 1; i <= count; i++) {
+          const file = `${i}.mp3`;
+          try {
+            const res = await fetch(baseURL + file, { method: "HEAD" });
+            if (!res.ok) continue;
+          } catch {
+            continue;
+          }
+
+          const track = document.createElement("div");
+          track.className = "track";
+
+          const name = document.createElement("span");
+          name.textContent = file;
+
+          const button = document.createElement("button");
+          button.textContent = "Play";
+          button.addEventListener("click", () => {
+            if (audio.src !== baseURL + file) {
+              // New track: stop previous and play this
+              if (currentButton) currentButton.textContent = "Play";
+              audio.src = baseURL + file;
+              audio.play();
+              button.textContent = "Pause";
+              currentButton = button;
+            } else {
+              // Same track: toggle play/pause
+              if (audio.paused) {
+                audio.play();
+                button.textContent = "Pause";
+              } else {
+                audio.pause();
+                button.textContent = "Play";
+              }
+            }
+          });
+
+          track.appendChild(name);
+          track.appendChild(button);
+          playlist.appendChild(track);
+        }
+      }
+
+      // Reset button text when audio ends
+      audio.addEventListener("ended", () => {
+        if (currentButton) currentButton.textContent = "Play";
+      });
+
+      // Load playlist from inputs
+      loadBtn.addEventListener("click", () => {
+        const username = usernameInput.value.trim();
+        const repo = repoInput.value.trim();
+        const count = parseInt(fileCountInput.value);
+        if (username && repo && count > 0) {
+          const baseURL = `https://raw.githubusercontent.com/${username}/${repo}/refs/heads/main/`;
+          buildPlaylist(baseURL, count);
+        } else {
+          alert("Please enter username, repo, and number of files!");
+        }
+      });
+
+      // Mute light
+      light.classList.toggle("muted", audio.muted);
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          e.preventDefault();
+          if (!audio.muted) {
+            audio.muted = true;
+            light.classList.add("muted");
+          }
+        }
+      });
+
+      audio.addEventListener("volumechange", () => {
+        if (audio.muted) light.classList.add("muted");
+        else light.classList.remove("muted");
+        volLabel.textContent = Math.round(audio.volume * 100) + "%";
+      });
+
+      // Volume buttons
+      volUp.addEventListener("click", () => {
+        audio.volume = Math.min(audio.volume + 0.05, 1);
+        volLabel.textContent = Math.round(audio.volume * 100) + "%";
+      });
+      volDown.addEventListener("click", () => {
+        audio.volume = Math.max(audio.volume - 0.05, 0);
+        volLabel.textContent = Math.round(audio.volume * 100) + "%";
+      });
+    </script>
+  </body>
+</html>
